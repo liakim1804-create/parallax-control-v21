@@ -963,7 +963,7 @@ hr.ov-blockdiv { margin: var(--ov-blockgap) 0; }
 .ov-hero-stats b { font-size: 24px; font-weight: 600; line-height: 32px; height: 32px; display: flex; align-items: baseline; justify-content: center; letter-spacing: -0.02em; }
 .ov-hero-stats b i { line-height: 32px; }   /* 단위 글자가 숫자 줄을 밀어 올리지 않게 — 세 칸의 숫자 · 이름 높이를 같게 */   /* 줄 높이 32 + 이름 20 = 52 (4의 배수) */
 .ov-hero-stats b i { font-style: normal; font-size: 14px; font-weight: 600; margin-left: 2px; letter-spacing: -0.02em; }
-.ov-hero-stats span { font-size: var(--f-caption); line-height: 20px; color: color-mix(in srgb, var(--accent) 82%, transparent); white-space: nowrap; }
+.ov-hero-stats span { font-size: var(--f-caption); line-height: 140%; color: color-mix(in srgb, var(--accent) 82%, transparent); white-space: nowrap; }
 
 /* 왼쪽 위 표식 — 처리 단계 고리. 여덟 단계 중 어디까지 왔는지를 중요도 색 호로, 가운데는 단계 번호 */
 .ov-inc-badge {
@@ -1515,7 +1515,7 @@ body.resizing .mp-sidebar { box-shadow: none; }
 .mp-brief .mp-brief-h { align-items: center; }
 .mp-brief .mp-brief-h > *, .mp-brief .mp-brief-prio > .cap { height: 20px; line-height: 20px; align-self: center; }
 .mp-brief .mp-brief-h .mp-card-x { display: grid; place-items: center; width: 20px; }
-.mp-brief :is(.mp-brief-name, .mp-brief-sum, .mp-brief-meta > div, .mp-hz-list > span) { line-height: 20px; }
+.mp-brief :is(.mp-brief-name, .mp-brief-sum, .mp-brief-meta > div, .mp-hz-list > span) { line-height: 140%; }
 .mp-brief .mp-hz-ic { padding-top: 0; height: 20px; display: flex; align-items: center; }
 .mp-brief .mp-hz-list { gap: 0; }   /* 위험 요소 줄도 20px 간격 */
 /* theme.css 의 `hr.hair` 가 margin:0 이라 요소까지 함께 적어 눌러 준다 */
@@ -7591,23 +7591,23 @@ html.px-hl-cover #root * { animation-play-state: paused !important; }
 *, *::before, *::after { letter-spacing: -0.02em; }   /* 몸에만 걸면 px 로 굳어 물려져 글자 크기가 다른 곳에서 -2.3% · -1.6% 가 됐다 — 요소마다 제 글자 크기로 셈 */
 /* 메시지 위계 (현장 정보 전송) — 보낸 사람 →(4) 내용 →(8) 시각 · 확인, 메시지 사이는 16. 한 덩어리 안은 좁게, 덩어리끼리는 넓게 */
 .tx-bubble { gap: 0; }
-.tx-bubble > .tx-text { margin-top: 4px; line-height: 24px; }
+.tx-bubble > .tx-text { margin-top: 4px; }
 .tx-bubble > .tx-foot { margin-top: 8px; }
 .tx-list { gap: 16px; }
-/* LEADING (10-18) 행간 통일 — 기준은 현장 정보 전송 본문(16px · 24px = 1.5배). 따로 정하지 않은 글은 모두 「글자 × 1.5 를 4px 단위로」:
-   14 → 20 · 16 → 24 · 18 → 28 · 24 → 36. 본문으로 따로 정해 두었던 곳도 16 → 24 로 맞춘다 */
-*, *::before, *::after { line-height: round(1.5em, 4px); }
-.ov-hero-sum, .ov-root .ov-inc > .ov-inc-type, .mp-brief .mp-brief-sum, .lf-t, .md-ev-t { line-height: 24px; }
-.ov-all { line-height: 20px; }   /* font: inherit 로 부모(16)의 24 를 물려받았다 — 캡션 14 는 20 */
+/* LEADING (10-18) 행간은 비율 140% 하나 — px 로 정하면 작은 글(14)에서 20px 가 넓어 보였다. 요소마다 제 글자 크기로 셈(14 → 19.6, 16 → 22.4).
+   본문 · 목록으로 따로 px · 다른 배수를 주던 곳도 140% 로 맞춘다 */
+*, *::before, *::after { line-height: 140%; }
+:is(.tx-text, .ho-line, .ho-say, .ho-ev, .ho-min-g li, .ov-hero-sum, .ov-hero-who, .ov-inc-type, .ov-inc-no, .ov-inc-place, .ov-all,
+    .mp-brief-sum, .mp-brief-meta > div, .mp-hz-list > span, .mp-brief-name, .lf-t, .md-ev-t, .ho-meta, .ho-n, .md-col-h,
+    .ov-hero-name, .ov-hero-stage, .ov-hero-stage *) { line-height: 140% !important; }
 /* RHYTHM (10-18) 정보 위계 간격 — 한 덩어리 안 4 · 보조 정보 8 · 덩어리 사이 16 · 구역 사이 24 (현장 정보 전송 말풍선과 같은 규칙) */
 /* 기록 · 회의록: 대화 줄은 한 줄이 한 덩어리 — 줄 안쪽 위아래 4 + 줄 사이 8 = 글줄끼리 16 */
 .ho-script { gap: 8px; }
-.ho-script > .ho-line { padding-top: 4px; padding-bottom: 4px; line-height: 24px; }
+.ho-script > .ho-line { padding-top: 4px; padding-bottom: 4px; }
 /* 회의록: 갈래 제목 →(8) 그 갈래 줄들(서로 4) · 갈래 사이 16 · 머리(PARALLAX AI) →(16) 첫 갈래 */
 .ho-min-card { gap: 16px; }
 .ho-min-g { gap: 8px; }
 .ho-min-g ul { gap: 4px; }
-.ho-min-g li { line-height: 24px; }
 /* 지도 위 현장 대화: 말한 사람 →(4) 한 말 */
 .lf-t { margin-top: 4px; }
 /* TYPE (10-18) 글자 굵기는 400 · 500 · 600 셋만 — 기본으로 굵게(700) 나오는 태그도 600 으로 */
