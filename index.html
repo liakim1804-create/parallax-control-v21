@@ -8295,6 +8295,7 @@ PX.data = {
     "A-109": [
       ["19:58", "신고자", "{상황|9살 아이가 놀이터에서 30분째 안 보여요}."],
       ["20:00", "", "112 접수 · {조치|여성청소년팀 여청-2 출동 지령}"],
+      ["20:10", "", "여청-2 현장 도착"],
       ["20:12", "여청-2", "보호자 만났습니다. {상황|마지막으로 본 곳은 놀이터 동쪽}, 파란 점퍼 차림입니다."],
       ["20:20", "지휘통제실", "{조치|공원을 4개 구역으로 나눠 수색}합니다. 여청-2 동측 수림대, 순찰-12 서측 출입구."],
       ["20:34", "순찰-12", "서측 출입구 CCTV 확인 중입니다. {위험|출입구가 5곳이라} 전부 보려면 시간이 걸립니다."],
@@ -8312,7 +8313,8 @@ PX.data = {
       ["20:35", "신고자", "옆 건물에서 새벽까지 {상황|큰 음악 소리}가 나요."],
       ["20:37", "", "112 접수 · {조치|지역2팀 지역-9 출동 지령}"],
       ["20:49", "지역-9", "현장 도착. {상황|이번 달 세 번째 신고}인 곳입니다."],
-      ["20:51", "지역-9", "{조치|거주자에게 계도}했습니다. {상황|물리적 충돌은 없습니다}."]
+      ["20:51", "지역-9", "{조치|거주자에게 계도}했습니다. {상황|물리적 충돌은 없습니다}."],
+      ["20:53", "지휘통제실", "지역-9, {조치|재발하면 바로 신고하도록 안내}하고 순찰로 복귀하십시오."]
     ],
     "A-098": [
       ["18:20", "신고자", "{상황|길에 사람이 누워 있어요}."],
@@ -11394,6 +11396,7 @@ function flyCamera(map, center, options = {}) {
               out.fold.push({ li: i, t: l[0], kind: '지시', text: txt });
             }
           } else if (l[1] !== '신고자') {
+            if (i === arrI) out.car.push({ li: i, t: l[0], kind: '도착', text: l[1] + ' 현장 도착' });   // (10-18) 요원의 도착 보고도 순찰차 화면에 「도착」으로
             while ((m = re.exec(l[2]))) {
               if (m[1] === '위험') out.ar.push({ li: i, t: l[0], kind: '경고', text: m[2], from: l[1] });
               if (m[1] === '확인') out.fold.push({ li: i, t: l[0], kind: '확인 필요', text: m[2], from: l[1] });
@@ -11430,7 +11433,9 @@ function flyCamera(map, center, options = {}) {
       // ── 기기 화면 (기기 실제 크기로 그리고 칸에 맞춰 줄인다 — 안쪽 여백도 4의 배수로 지킨다) ──
       function arScreen(inc, list, ev) {
         var men = store.officersOf(inc.id).filter(function (o) { return o.ar !== '미연결'; });
-        var o = men[0] || store.officersOf(inc.id)[0] || { call: '—', battery: 0 };
+        // (10-18) 경고는 그것을 알린 요원의 시야, 지시는 그 사건의 현장지휘관 시야
+        var lead = inc.lead && store.officers.find(function (x) { return x.id === inc.lead; });
+        var o = (ev && ev.from && store.officers.find(function (x) { return x.call === ev.from; })) || (lead && lead.ar !== '미연결' ? lead : null) || men[0] || store.officersOf(inc.id)[0] || { call: '—', battery: 0 };
         var upto = ev ? minOf(ev.t) : 0;
         var warns = list.filter(function (x) { return x.kind === '경고' && minOf(x.t) <= upto; }).slice(-3);
         return '<div class="md-ar">' +
@@ -11447,17 +11452,27 @@ function flyCamera(map, center, options = {}) {
             '<span>' + PX.icon('battery') + esc((o.battery || 0) + '%') + '</span></div>' +
         '</div>';
       }
+      /* (10-18) 순찰차 화면의 길 — 그 사건에 배정된 차가 실제로 가는 길(PX.linkPath, 미리 찾아 둔 OSM 경로)을 그린다. 사건마다 다르다 */
+      function routeSVG(car, inc, there) {
+        var p = car && PX.linkPath ? PX.linkPath(car.id, inc.id) : null;
+        var grid = '<g class="st"><path d="M0 64H320M0 152H320M0 240H320M64 0V304M168 0V304M256 0V304"/></g>';
+        if (!p || p.length < 2) return '<svg viewBox="0 0 320 304" aria-hidden="true">' + grid + '<circle class="go" cx="160" cy="152" r="12"/></svg>';
+        var k = Math.cos(p[0][1] * Math.PI / 180), xs = p.map(function (q) { return q[0] * k; }), ys = p.map(function (q) { return -q[1]; });
+        var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+        var sc = Math.min(272 / Math.max(1e-9, x1 - x0), 256 / Math.max(1e-9, y1 - y0)), ox = (320 - (x1 - x0) * sc) / 2, oy = (304 - (y1 - y0) * sc) / 2 + 8;
+        var pt = function (i) { return [(ox + (xs[i] - x0) * sc).toFixed(1), (oy + (ys[i] - y0) * sc).toFixed(1)]; };
+        var d = xs.map(function (_, i) { var q = pt(i); return (i ? 'L' : 'M') + q[0] + ' ' + q[1]; }).join(' ');
+        var a = pt(0), b = pt(xs.length - 1), me = there ? b : a;
+        return '<svg viewBox="0 0 320 304" aria-hidden="true">' + grid + '<path class="rt" d="' + d + '"/>' +
+          '<circle class="go" cx="' + b[0] + '" cy="' + b[1] + '" r="12"/><circle class="me" cx="' + me[0] + '" cy="' + me[1] + '" r="8"/></svg>';
+      }
       function carScreen(inc, list, ev, arrive) {
         var cars = store.vehiclesOf(inc.id);
         var t = ev ? minOf(ev.t) : 0, there = arrive && t >= minOf(arrive);
         var left = arrive && !there ? Math.max(1, minOf(arrive) - t) : null;
         return '<div class="md-car">' +
           '<div class="md-car-route">' +
-            '<svg viewBox="0 0 320 304" aria-hidden="true">' +
-              '<g class="st"><path d="M0 64H320M0 152H320M0 240H320M64 0V304M168 0V304M256 0V304"/></g>' +
-              '<path class="rt" d="M40 272 L64 240 L168 240 L168 152 L256 152 L256 72"/>' +
-              '<circle class="me" cx="40" cy="272" r="8"/><circle class="go" cx="256" cy="72" r="12"/>' +
-            '</svg>' +
+            routeSVG(cars[0], inc, there) +
             '<span class="md-car-eta">' + (there ? '현장 도착' : left ? '도착까지 ' + left + '분' : '이동 중') + '</span>' +
           '</div>' +
           '<div class="md-car-main">' +
