@@ -7624,6 +7624,7 @@ b, strong, h1, h2, h3, h4, h5, h6, th, summary { font-weight: 600; }
 /* (10-18) 넓은 창(격자 모드 등)에서 2열 고정이면 정사각 위젯이 창 폭의 반씩이라 거대해졌다 — 160px 이상으로 들어가는 만큼 여러 열로 */
 .ov-root .ov-rows { grid-template-columns: repeat(auto-fit, minmax(min(164px, calc((100% - 8px) / 2)), 1fr)); }   /* 창 폭을 꽉 채운다(빈 여백 없음). 최소 2열(1열로 꺾여 거대해지지 않게), 넓은 창(격자 모드)에서만 열이 는다 */
 .ov-root .ov-inc > .ov-inc-no { margin-top: auto; padding-top: 8px; }
+.ov-root .ov-inc > .ov-inc-place { margin-top: -4px; }   /* (10-18) 번호 · 주소는 한 덩어리 두 줄 — 카드의 4px 사이를 지워 행간(140%)만으로 붙인다 */
 .ov-inc-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .ov-inc-pri { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 999px;
   font-size: var(--f-caption); font-weight: 600; color: var(--pc); background: color-mix(in srgb, var(--pc) 12%, transparent); }
