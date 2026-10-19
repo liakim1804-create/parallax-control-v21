@@ -7597,6 +7597,22 @@ html.px-hl-cover #root * { animation-play-state: paused !important; }
 /* (10-18) 사건 브리핑 숨 고르기 — 이름 →(24) 요약, 브리핑 →(40) 사건 목록 */
 .ov-root .ov-hero-sum { margin-top: 24px; }
 .ov-root hr.ov-blockdiv { margin: 20px 0; }
+/* (10-19) 전체 상황 — 검색칸을 뺀 카드(인력·차량 · CCTV 칸, 사건 목록 위젯)는 흰 바탕. 고른 사건(키 컬러)은 그대로.
+   마우스를 올리면 아주 옅은 회색으로 — 흰 판 위에서도 누를 수 있는 칸임이 보이게 */
+.ov-root { --ov-card: #fff; --ov-card-hover: #f4f5f8; }
+:root[data-theme="dark"] .ov-root { --ov-card: rgba(255, 255, 255, .1); --ov-card-hover: rgba(255, 255, 255, .16); }
+.ov-root .mp-sidebar :is(.mp-layer, .mp-plain) { background: var(--ov-card); }
+.ov-root .mp-sidebar .mp-layer:hover { background: var(--ov-card-hover); }
+.ov-root .ov-inc:not(.sel) .ov-inc-bg { background: var(--ov-card); }
+.ov-root .ov-inc:not(.sel):hover .ov-inc-bg { background: var(--ov-card-hover); }
+/* (10-19) 현장 정보 전송 — 말풍선은 모두 흰 바탕(내 것은 키 컬러 글로 구분), 상대 말풍선 왼쪽에 프로필 사진 36px */
+.tx-root { --tx-mine-bg: #fff; --tx-theirs-bg: #fff; }
+:root[data-theme="dark"] .tx-root { --tx-mine-bg: rgba(255, 255, 255, .1); --tx-theirs-bg: rgba(255, 255, 255, .1); }
+.tx-row.theirs { gap: 8px; align-items: flex-start; }
+.tx-ava { flex: none; width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #eceef2; -webkit-user-drag: none; user-select: none; }
+.tx-ava-txt { display: grid; place-items: center; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.tx-ava.blank { visibility: hidden; height: 0; }
+.tx-list > .tx-row.cont { margin-top: -8px; }   /* 같은 사람이 이어 보내면 한 덩어리 — 메시지 사이 16 → 8 */
 /* LEADING (10-18) 행간은 비율 140% 하나 — px 로 정하면 작은 글(14)에서 20px 가 넓어 보였다. 요소마다 제 글자 크기로 셈(14 → 19.6, 16 → 22.4).
    본문 · 목록으로 따로 px · 다른 배수를 주던 곳도 140% 로 맞춘다 */
 *, *::before, *::after { line-height: 140%; }
@@ -11106,8 +11122,19 @@ function flyCamera(map, center, options = {}) {
       };
 
       // ══ 대화 내역 ═════════════════════════════════════════════
-      function bubbleHTML(m) {
+      /* (10-19) 상대 메시지에는 카카오톡처럼 프로필 사진 — 요원 얼굴(PX.data.faces), 없으면 이름 첫 글자 원.
+         같은 사람이 이어서 보내면 첫 메시지에만 사진을 달고 나머지는 자리만 비워 말풍선 줄을 맞춘다 */
+      function avatarHTML(m, cont) {
+        if (cont) return '<span class="tx-ava blank" aria-hidden="true"></span>';
+        const o = store.officers.find(x => x.call === m.from);
+        const face = o && PX.data.faces ? PX.data.faces[o.id] : null;
+        if (face) return `<img class="tx-ava" src="${face}" alt="${PX.esc(m.from)}" draggable="false">`;
+        const ch = (o && o.name ? o.name : m.from || '?').trim().charAt(0);
+        return `<span class="tx-ava tx-ava-txt" aria-hidden="true">${PX.esc(ch)}</span>`;
+      }
+      function bubbleHTML(m, i, arr) {
         const mine = !!m.isMine;
+        const cont = !mine && arr && i > 0 && !arr[i - 1].isMine && arr[i - 1].from === m.from;
         const meta = [];
 
         if (m.kind !== '일반') {
@@ -11125,7 +11152,7 @@ function flyCamera(map, center, options = {}) {
         const readBtn = (!mine && !m.isRead)
           ? `<button class="tx-readbtn" type="button" data-read="${PX.esc(m.id)}">확인</button>` : '';
 
-        return `<div class="tx-row ${mine ? 'mine' : 'theirs'}">
+        return `<div class="tx-row ${mine ? 'mine' : 'theirs'}${cont ? ' cont' : ''}">${mine ? '' : avatarHTML(m, cont)}
             <div class="tx-bubble${m.isPinned ? ' pinned' : ''}" data-msg="${PX.esc(m.id)}">
               <div class="tx-meta">${meta.join('')}</div>
               <div class="tx-text">${PX.esc(m.text)}</div>
@@ -19891,7 +19918,7 @@ void main(){
           streaks.push({ a: [Math.cos(a) * from, Math.sin(a) * from], b: [Math.cos(a) * to, Math.sin(a) * to], A: W.c[0], w: 6 * wk });
         });
       });
-      out.push({ id: inc.id, O: O, s: s, lat: ll[1], seed: hash(inc.id), blobs: blobs.slice(0, NB), streaks: streaks.slice(0, NS),
+      out.push({ id: inc.id, O: O, s: s, lat: ll[1], seed: hash(inc.id), blobs: blobs.slice(0, NB), streaks: [],   /* (10-19) 붓 자국(사건 → 인력으로 뻗는 선)은 뺐다 — 위에서 보면 잉크 자국처럼 보였다 */
         inc: ll, mesh: null, keys: null, t0: 0, rise0: 0 });
     });
     return out;
@@ -22736,5 +22763,14 @@ void main() {
   window.dispatchEvent(new Event('pai-ready'));
 })(window.PX);
 </script>
+<style id="pai-blue">
+/* (10-19) PARALLAX AI 카드 — 하늘색 하늘 대신 키 컬러 판(레퍼런스 이미지 그대로).
+   위 60% 는 #1647FA 한 색, 그 아래로 남색(#06227F)까지 내려앉고, 가장자리만 옅은 파랑으로 살짝 밝다. 흰 테두리 빛은 뺐다 */
+#pai .pai-sky { background: linear-gradient(to bottom, #1647fa 0%, #1647fa 60%, #1543ec 66%, #113ad6 72%, #0f36c3 78%, #0c2fae 84%, #0a299b 90%, #072386 100%) !important; }
+#pai .pai-sky > i:first-child { background: none !important; -webkit-mask-image: none !important; mask-image: none !important; }   /* 가운데만 비치던 하늘 줄기(가로 마스크)를 지운다 */
+#pai .pai-sky > i:last-child { box-shadow: inset 0 0 28px 4px rgb(80 118 255 / .55), inset 0 0 6px 1px rgb(96 130 255 / .45) !important; }
+#pai .pai-fade::before, #pai .pai-fade::after { background: none !important; }
+#pai .pai-x, #pai .pai-x .ic { color: #fff !important; }   /* 파란 판 위 닫기 단추 — 짙은 파랑이면 묻힌다 */
+</style>
 </body>
 </html>
